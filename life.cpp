@@ -18,12 +18,16 @@ void readIntoGrid(Grid<char>& life);
 void openFile(ifstream& input);
 Vector<int> resizeGrid(ifstream& input, Grid<char>& grid);
 void fillInGrid(ifstream& input, Grid<char>& grid, const Vector<int>& size);
+int countNeighbors(Grid<char>& grid, int r, int c);
+void oneTick(Grid<char>& grid);
+void cellUpdate(Grid<char>& grid, Grid<char>& copyLife, int r, int c, int neighbors);
 void welcome();
 
 int main() {
     Grid<char> life;
     welcome();
     readIntoGrid(life);
+    oneTick(life);
 
     return 0;
 }
@@ -34,6 +38,76 @@ void readIntoGrid(Grid<char>& grid){
     Vector<int> size = resizeGrid(input, grid);
     fillInGrid(input, grid, size);
 }
+
+
+/*     grid[r-1][c-1]        grid[r-1][c]     grid[r - 1][c + 1]
+       grid[r][c - 1]        grid[r][c]       grid[r][c + 1]
+       grid[r + 1][c - 1]    grid[r + 1][c]   grid[r + 1][c + 1]
+*/
+
+
+void oneTick(Grid<char>& grid){
+    int row = grid.numRows();
+    int col = grid.numCols();
+    Grid<char> copyLife(row,col);
+    for(int r = 0; r < row; r++){
+        for(int c = 0; c < col; c++){
+            int neighbors = countNeighbors(grid, r, c);
+            cout <<"row "<<r+1<<" column "<<c+1<<" has this number of neighbors "<<neighbors << endl;
+            cellUpdate(grid, copyLife, r, c, neighbors);
+        }
+    }
+    grid = copyLife;
+    for(int r = 0; r < row; r++){
+        for(int c = 0; c < col; c++){
+            cout<<grid[r][c];
+        }
+        cout<<endl;
+    }
+}
+
+void cellUpdate(Grid<char>& grid, Grid<char>& copyLife, int r, int c, int neighbors){
+    if(neighbors==3){
+        copyLife[r][c] = 'X';
+    }
+    else if(neighbors == 2){
+        if(grid[r][c]=='X') copyLife[r][c] = 'X';
+        if(grid[r][c]=='-') copyLife[r][c] = '-';
+    }
+    else{
+        copyLife[r][c] = '-';
+    }
+}
+
+int countNeighbors(Grid<char>& grid, int r, int c){
+    int count = 0;
+    if(grid.inBounds(r-1, c-1)){
+        if(grid[r-1][c-1] == 'X') count++;
+    }
+    if(grid.inBounds(r-1, c) ){
+        if(grid[r-1][c] == 'X') count++;
+    }
+    if(grid.inBounds(r-1, c+1) ){
+        if(grid[r-1][c+1] == 'X') count++;
+    }
+    if(grid.inBounds(r, c-1) ){
+        if(grid[r][c-1] == 'X') count++;
+    }
+    if(grid.inBounds(r, c+1) ){
+        if(grid[r][c+1] == 'X') count++;
+    }
+    if(grid.inBounds(r+1, c-1) ){
+        if(grid[r+1][c-1] == 'X') count++;
+    }
+    if(grid.inBounds(r+1, c) ){
+        if(grid[r+1][c] == 'X') count++;
+    }
+    if(grid.inBounds(r+1, c+1) ){
+        if(grid[r+1][c+1] == 'X') count++;
+    }
+    return count;
+}
+
 
 void fillInGrid(ifstream& input, Grid<char>& grid, const Vector<int>& size ){
     string line;
@@ -49,8 +123,6 @@ void fillInGrid(ifstream& input, Grid<char>& grid, const Vector<int>& size ){
         row++;
         if(row==size[0]) break;
     }
-
-    cout<<grid.toString();
     input.close();
 }
 
