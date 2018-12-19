@@ -20,10 +20,16 @@ void readIntoGrid(Grid<char>& life);
 void openFile(ifstream& input);
 Vector<int> resizeGrid(ifstream& input, Grid<char>& grid);
 void fillInGrid(ifstream& input, Grid<char>& grid, const Vector<int>& size);
+//decides on neighbors counting algoritm
+bool askIfWrap();
 // This block updates grid to the next generation
-void oneTick(Grid<char>& grid);
-int countNeighbors(Grid<char>& grid, int r, int c);
+void oneTick(Grid<char>& grid, bool wrap);
+int countNeighborsNoWrap(Grid<char>& grid, int r, int c);
+int countNeighborsWrapping(Grid<char>& grid, int r, int c);
 void cellUpdate(Grid<char>& grid, Grid<char>& copyLife, int r, int c, int neighbors);
+
+string animateTickQuit();
+void computeGenerations(Grid<char>& life, bool toWrap, int NGenerations = 1);
 // prints updated grid
 void printGrid(Grid<char>& grid);
 
@@ -32,10 +38,48 @@ int main() {
     Grid<char> life;
     welcome();
     readIntoGrid(life);
-    oneTick(life);
+    bool toWrap = askIfWrap();
     printGrid(life);
-
+    // Game
+    string gameFormat = animateTickQuit();
+    while(gameFormat!="q"){
+        if(gameFormat =="t"){
+        computeGenerations(life, toWrap);
+    }
+        if(gameFormat =="a"){
+            int frames = getInteger("How many frames? ");
+            computeGenerations(life, toWrap, frames);
+        }
+        gameFormat = animateTickQuit();
+    }
     return 0;
+}
+
+void computeGenerations(Grid<char>& life, bool toWrap, int NGenerations){
+    for(int generation = 0; generation < NGenerations; generation++){
+        pause(50);
+        clearConsole();
+        oneTick(life, toWrap);
+        printGrid(life);
+
+    }
+}
+
+string animateTickQuit(){
+    string form;
+    string gameForm = getLine("a)nimate, t)ick, q)uit ? ");
+    while(!startsWith(gameForm,"t")&&!startsWith(gameForm,"a")&&!startsWith(gameForm,"q")){
+        gameForm = getLine("a)nimate, t)ick, q)uit ? ");
+    }
+    if(startsWith(gameForm,"t")) form = "t";
+    else if(startsWith(gameForm,"a")) form = "a";
+    else if(startsWith(gameForm,"q")) form = "q";
+    return form;
+}
+
+bool askIfWrap(){
+    bool wrap = getYesOrNo("Should the simulation wrap around the grid (y/n) ? ", "Please, type in y or no");
+    return wrap;
 }
 
 void printGrid(Grid<char>& grid){
@@ -47,6 +91,7 @@ void printGrid(Grid<char>& grid){
         }
         cout<<endl;
     }
+    cout<<endl;
 }
 // reads file input into grid
 void readIntoGrid(Grid<char>& grid){
@@ -63,14 +108,15 @@ void readIntoGrid(Grid<char>& grid){
 */
 
 // updates original grid with cells for the next generation
-void oneTick(Grid<char>& grid){
+void oneTick(Grid<char>& grid, bool wrap){
     int row = grid.numRows();
     int col = grid.numCols();
     Grid<char> copyLife(row,col);
     for(int r = 0; r < row; r++){
         for(int c = 0; c < col; c++){
-            int neighbors = countNeighbors(grid, r, c);
-            cout <<"row "<<r+1<<" column "<<c+1<<" has this number of neighbors "<<neighbors << endl;
+            int neighbors;
+            if(wrap)neighbors = countNeighborsWrapping(grid, r, c);
+            else if(!wrap)neighbors = countNeighborsNoWrap(grid, r, c);
             cellUpdate(grid, copyLife, r, c, neighbors);
         }
     }
@@ -98,7 +144,12 @@ void cellUpdate(Grid<char>& grid, Grid<char>& copyLife, int r, int c, int neighb
     }
 }
 
-int countNeighbors(Grid<char>& grid, int r, int c){
+int countNeighborsWrapping(Grid<char>& grid, int r, int c){
+    int count = 0;
+    return count;
+}
+
+int countNeighborsNoWrap(Grid<char>& grid, int r, int c){
     int count = 0;
     if(grid.inBounds(r-1, c-1)){
         if(grid[r-1][c-1] == 'X') count++;
@@ -183,3 +234,4 @@ void welcome() {
     cout << "- Locations with 3 neighbors will create life." << endl;
     cout << "- A cell with 4 or more neighbors dies." << endl;
 }
+
