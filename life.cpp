@@ -14,24 +14,41 @@
 
 using namespace std;
 
+void welcome();
+// This block reads file input into grid
 void readIntoGrid(Grid<char>& life);
 void openFile(ifstream& input);
 Vector<int> resizeGrid(ifstream& input, Grid<char>& grid);
 void fillInGrid(ifstream& input, Grid<char>& grid, const Vector<int>& size);
-int countNeighbors(Grid<char>& grid, int r, int c);
+// This block updates grid to the next generation
 void oneTick(Grid<char>& grid);
+int countNeighbors(Grid<char>& grid, int r, int c);
 void cellUpdate(Grid<char>& grid, Grid<char>& copyLife, int r, int c, int neighbors);
-void welcome();
+// prints updated grid
+void printGrid(Grid<char>& grid);
+
 
 int main() {
     Grid<char> life;
     welcome();
     readIntoGrid(life);
     oneTick(life);
+    printGrid(life);
 
     return 0;
 }
 
+void printGrid(Grid<char>& grid){
+    int row = grid.numRows();
+    int col = grid.numCols();
+    for(int r = 0; r < row; r++){
+        for(int c = 0; c < col; c++){
+            cout<<grid[r][c];
+        }
+        cout<<endl;
+    }
+}
+// reads file input into grid
 void readIntoGrid(Grid<char>& grid){
     ifstream input;
     openFile(input);
@@ -45,7 +62,7 @@ void readIntoGrid(Grid<char>& grid){
        grid[r + 1][c - 1]    grid[r + 1][c]   grid[r + 1][c + 1]
 */
 
-
+// updates original grid with cells for the next generation
 void oneTick(Grid<char>& grid){
     int row = grid.numRows();
     int col = grid.numCols();
@@ -58,13 +75,15 @@ void oneTick(Grid<char>& grid){
         }
     }
     grid = copyLife;
-    for(int r = 0; r < row; r++){
-        for(int c = 0; c < col; c++){
-            cout<<grid[r][c];
-        }
-        cout<<endl;
-    }
 }
+
+/* Updates a state of a cell  in a copy of a grid. Takes reference parameters of
+ * original grid and copy grid, as well as row, column number of individual cell, number of
+ * neigbors a cell has. We need a copy of grid, because we need to catch a previous state
+ * of a colony and show the next generation of cells. If we change original grid, the state
+ * of cells in next rows will be defined by current generation of cells, not the previous generation,
+ * which is incorrect.
+*/
 
 void cellUpdate(Grid<char>& grid, Grid<char>& copyLife, int r, int c, int neighbors){
     if(neighbors==3){
@@ -108,27 +127,30 @@ int countNeighbors(Grid<char>& grid, int r, int c){
     return count;
 }
 
-
+// Fills in grid with input from a file.
 void fillInGrid(ifstream& input, Grid<char>& grid, const Vector<int>& size ){
     string line;
     int row = 0;
-    /* this getline continues to read a file when the previous call to getline
-     *  in resize greed function stopped reading*/
+    /* this getline continues to read a file from place when the previous call to
+     * getline in resizeGrid function stopped reading*/
     while(getline(input, line)){
         // tokanize line we just have read
        istringstream input(line);
-       for(int i = 0; i < size[1]; i++){
-           input >> grid[row][i];
+       for(int col = 0; col < size[1]; col++){
+           input >> grid[row][col];
        }
         row++;
+        // break when we reach actual height capacity of a grid
         if(row==size[0]) break;
     }
     input.close();
 }
 
+// resizes a grid with size provided in input file. returns grid size
 Vector<int> resizeGrid(ifstream& input, Grid<char>& grid){
     Vector<int> size;
     string line;
+    // loop 2 times, because on first two lines numbers for size of a grid are expected
     for(int i = 0; i < 2; i++){
         // if input is const, i cant readline on it
         getline(input, line);
