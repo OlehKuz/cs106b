@@ -52,6 +52,7 @@ int main() {
         }
         gameFormat = animateTickQuit();
     }
+    cout<<"Have a nice day! "<<endl;
     return 0;
 }
 
@@ -78,7 +79,8 @@ string animateTickQuit(){
 }
 
 bool askIfWrap(){
-    bool wrap = getYesOrNo("Should the simulation wrap around the grid (y/n) ? ", "Please, type in y or no");
+    bool wrap = getYesOrNo("Should the simulation wrap around the grid (y/n) ? ",
+                           "Please, type in y or no");
     return wrap;
 }
 
@@ -91,7 +93,6 @@ void printGrid(Grid<char>& grid){
         }
         cout<<endl;
     }
-    cout<<endl;
 }
 // reads file input into grid
 void readIntoGrid(Grid<char>& grid){
@@ -146,6 +147,24 @@ void cellUpdate(Grid<char>& grid, Grid<char>& copyLife, int r, int c, int neighb
 
 int countNeighborsWrapping(Grid<char>& grid, int r, int c){
     int count = 0;
+    int width = grid.width();
+    int height = grid.height();
+        if(grid[(r-1+height)%height][(c-1+width)%width] == 'X') count++;
+
+        if(grid[(r-1+height)%height][c] == 'X') count++;
+
+        if(grid[(r-1+height)%height][(c+1)%width] == 'X') count++;
+
+        if(grid[r][(c-1+width)%width] == 'X') count++;
+
+        if(grid[r][(c+1)%width] == 'X') count++;
+
+        if(grid[(r+1)%height][(c-1+width)%width] == 'X') count++;
+
+        if(grid[(r+1)%height][c] == 'X') count++;
+
+        if(grid[(r+1)%height][(c+1)%width] == 'X') count++;
+
     return count;
 }
 
@@ -186,9 +205,9 @@ void fillInGrid(ifstream& input, Grid<char>& grid, const Vector<int>& size ){
      * getline in resizeGrid function stopped reading*/
     while(getline(input, line)){
         // tokanize line we just have read
-       istringstream input(line);
+       istringstream input2(line);
        for(int col = 0; col < size[1]; col++){
-           input >> grid[row][col];
+           input2 >> grid[row][col];
        }
         row++;
         // break when we reach actual height capacity of a grid
@@ -197,7 +216,10 @@ void fillInGrid(ifstream& input, Grid<char>& grid, const Vector<int>& size ){
     input.close();
 }
 
-// resizes a grid with size provided in input file. returns grid size
+/* resizes a grid with size provided in input file. returns grid size. Assumes that
+a file is of predefined format, w row, column numbers on first 2 lines,
+a file is at least 2 lines long
+*/
 Vector<int> resizeGrid(ifstream& input, Grid<char>& grid){
     Vector<int> size;
     string line;
@@ -234,4 +256,3 @@ void welcome() {
     cout << "- Locations with 3 neighbors will create life." << endl;
     cout << "- A cell with 4 or more neighbors dies." << endl;
 }
-
