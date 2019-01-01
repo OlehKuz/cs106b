@@ -19,17 +19,20 @@ static const int    BLACK = 0x000000;
 static const int    GREEN = 0x00FF00;
 
 void     doFauxtoshop(GWindow &gw, GBufferedImage &img);
-bool      openUserImage(GBufferedImage &img);
+bool     openUserImage(GBufferedImage &img);
 void     setWindowToImage(GWindow &gw, GBufferedImage &img);
 int      imageFilter();
+int      differenceNeighbors(const Grid<int> &copyImg, int row, int col);
+int      difTwoPixels(const Grid<int> &copyImg, int rowOrigin,
+                 int colOrigin,int rowNeighbor, int columnNeighbor);
 
-void     applyFilter(GBufferedImage &img, int filter);
-void     scatter(GBufferedImage &img);
-void     edgeDetect(GBufferedImage &img);
-void     greenScreen(GBufferedImage &img);
-void     compareImg(GBufferedImage &img);
-void     rotate(GBufferedImage &img);
-void     blur(GBufferedImage &img);
+void     applyFilter(Grid<int> &img, int filter);
+void     scatter(Grid<int> &img);
+void     edgeDetect(Grid<int> &img);
+void     greenScreen(Grid<int> &img);
+void     compareImg(Grid<int> &img);
+void     rotate(Grid<int> &img);
+void     blur(Grid<int> &img);
 
 void     saveImage(GBufferedImage &img);
 bool     openImageFromFilename(GBufferedImage& img, string filename);
@@ -67,8 +70,10 @@ void doFauxtoshop(GWindow &gw, GBufferedImage &img) {
     bool doPhotoshop = openUserImage(img);
     while(doPhotoshop){
         setWindowToImage(gw, img);
+        Grid<int> image = img.toGrid();
         int filter = imageFilter();
-        applyFilter(img, filter);
+        applyFilter(image, filter);
+        img.fromGrid(image);
         saveImage(img);
         gw.clear();
         cout << endl;
@@ -99,7 +104,42 @@ void saveImage(GBufferedImage &img){
 
 }
 
-void applyFilter(GBufferedImage &img, int filter){
+int differenceNeighbors(const Grid<int> &copyImg, int row, int col){
+    int max=0;
+    for(int h = row - 1; h < row + 1; h++) {
+        if(h >= 0 && h < copyImg.height()) {
+            for(int w = col - 1; w < col + 1; w++) {
+                if(w >= 0 && w < copyImg.width()) {
+                    int dif = difTwoPixels(copyImg, row, col, h, w);
+                    if(dif>max) max = dif;
+                }
+            }
+        }
+    }
+    return max;
+}
+
+int difTwoPixels(const Grid<int> &copyImg, int rowOrigin,
+                 int colOrigin,int rowNeighbor, int columnNeighbor){
+
+    int originalPixel = copyImg[rowOrigin][colOrigin];
+    int red, green, blue;
+    GBufferedImage::getRedGreenBlue(originalPixel, red, green, blue);
+
+    int neighborPixel = copyImg[rowNeighbor][columnNeighbor];
+    int redN, greenN, blueN;
+    GBufferedImage::getRedGreenBlue(neighborPixel, redN, greenN, blueN);
+
+    int rdif = abs(red-redN);
+    int gdif = abs(green-greenN);
+    int bdif = abs(blue-blueN);
+
+    int maxDif = (max(rdif,max(gdif,bdif)));
+
+    return maxDif;
+}
+
+void applyFilter(Grid<int> &img, int filter){
     switch(filter) {
         case 1: scatter(img); break;
         case 2: edgeDetect(img); break;
@@ -110,27 +150,57 @@ void applyFilter(GBufferedImage &img, int filter){
     }
 }
 
-void scatter(GBufferedImage &img){
+void scatter(Grid<int> &img){
+    Grid<int> copyImg = img;
+    int width = img.width();
+    int height = img.height();
+    int scatter = getInteger("Enter degree of scatter (1-100): ");
+    int scatterCol = width*(double)scatter/100;
+    int scatterRow = height*(double)scatter/100;
+    for(int row = 0; row < height; row++){
+        for(int col = 0; col < width; col++){
+            while(true){
+                int randomCol = randomInteger((col-scatterCol), (col+scatterCol));
+                int randomRow = randomInteger((row-scatterRow), (row+scatterRow));
+                if(copyImg.inBounds(randomRow, randomCol)){
+                    img[row][col]=copyImg[randomRow][randomCol];
+                    break;
+                }
+            }
+
+        }
+    }
+}
+
+void edgeDetect(Grid<int> &img){
+   int threshold = getInteger("Enter threshold for edge detection: ");
+   Grid<int> copyImg = img;
+        for(int row = 0; row < img.height(); row++) {
+            for(int col = 0; col < img.width(); col++) {
+                int maxDifference = differenceNeighbors(copyImg,row, col);
+                if(threshold<=maxDifference){
+                    img[row][col]=BLACK;
+                }
+                else{
+                    img[row][col]=WHITE;
+                }
+            }
+        }
+    }
+
+void greenScreen(Grid<int> &img){
 
 }
 
-void edgeDetect(GBufferedImage &img){
+void compareImg(Grid<int> &img){
 
 }
 
-void greenScreen(GBufferedImage &img){
+void rotate(Grid<int> &img){
 
 }
 
-void compareImg(GBufferedImage &img){
-
-}
-
-void rotate(GBufferedImage &img){
-
-}
-
-void blur(GBufferedImage &img){
+void blur(Grid<int> &img){
 
 }
 
